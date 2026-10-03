@@ -1,0 +1,26 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://app:app@db:5432/prices
+      PROVIDERS: live            # live = CoinGecko + Frankfurter, simulated = генератор для демо
+      POLL_SECONDS: "60"         # автоматический сбор раз в минуту
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: prices
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d prices"]
+      interval: 3s
+      retries: 10
+
+volumes:
+  pgdata:
